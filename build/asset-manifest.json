@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/computational-geometry-lab-1/static/css/main.3fe53400.css",
-    "main.js": "/computational-geometry-lab-1/static/js/main.87fe1dc5.js",
+    "main.css": "/computational-geometry-lab-1/static/css/main.2bc00dab.css",
+    "main.js": "/computational-geometry-lab-1/static/js/main.01201c71.js",
     "index.html": "/computational-geometry-lab-1/index.html",
-    "main.3fe53400.css.map": "/computational-geometry-lab-1/static/css/main.3fe53400.css.map",
-    "main.87fe1dc5.js.map": "/computational-geometry-lab-1/static/js/main.87fe1dc5.js.map"
+    "main.2bc00dab.css.map": "/computational-geometry-lab-1/static/css/main.2bc00dab.css.map",
+    "main.01201c71.js.map": "/computational-geometry-lab-1/static/js/main.01201c71.js.map"
   },
   "entrypoints": [
-    "static/css/main.3fe53400.css",
-    "static/js/main.87fe1dc5.js"
+    "static/css/main.2bc00dab.css",
+    "static/js/main.01201c71.js"
   ]
 }
