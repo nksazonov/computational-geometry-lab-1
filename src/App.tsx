@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Layer, Stage } from 'react-konva';
+
 import config from './config';
 import {Chain, Edge, Point, Segment} from './types/geometry';
 import {
@@ -12,16 +13,20 @@ import { transformChains, transformEdges, transformPoint, transformPoints } from
 import Chains from './components/Chains';
 import Edges from './components/Edges';
 import Points from './components/Points';
+import IData from './types/data';
 
 function App() {
   const [points, setPoints] = useState([] as Point[]);
   const [edges, setEdges] = useState([] as Edge[]);
-  const [chains, setChains] = useState([] as Chain[]);
   const [selectedPoint, setSelectedPoint] = useState(null as Point | null);
   const [selectedEdge, setSelectedEdge] = useState(null as Segment | null);
+  
+    const [savedPoints, savePoints] = useState([] as Point[]);
+    const [savedEdges, saveEdges] = useState([] as Edge[]);
 
-  const [savedPoints, savePoints] = useState([] as Point[]);
-  const [savedEdges, saveEdges] = useState([] as Edge[]);
+  const [chains, setChains] = useState([] as Chain[]);
+  const [resultChains, setResultChains] = useState([] as Chain[]);
+  const [displayedChains, setDisplayedChains] = useState(null as null | 'chains' | 'resultChains')
 
   const handleStageClick = (e: any) => {
     let {x, y} = e.currentTarget.getPointerPosition();
@@ -62,10 +67,9 @@ function App() {
 
     } else {
       // if present - Mark selected
-
       if (selectedPoint !== null) {
+        
         // if point was selected - create Edge to it
-
         if (selectedPoint === nearestPoint) {
           // if selected is the same as nearest - deselect
           setSelectedPoint(null);
@@ -90,6 +94,8 @@ function App() {
     setPoints([]);
     setEdges([]);
     setChains([]);
+    setResultChains([]);
+    setDisplayedChains(null);
     setSelectedPoint(null);
     setSelectedEdge(null);
   }
@@ -117,15 +123,17 @@ function App() {
     );
 
     setEdges(transformEdges(result.edges));
+    setChains(transformChains(result.chains));
+    setResultChains(transformChains(result.betweenChains));
 
-    setChains(transformChains(
-      result.betweenChains
-    ));
+    setDisplayedChains('resultChains');
   }
 
   const handleSaveClick = () => {
     savePoints(points);
     saveEdges(edges);
+
+    console.log(JSON.stringify({points, edges}));
   }
   
   const handleLoadClick = () => {
@@ -135,6 +143,31 @@ function App() {
 
   const handleClearChainsClick = () => {
     setChains([]);
+    setResultChains([]);
+    setDisplayedChains(null);
+  }
+
+  const handleToggleChainsClick = () => {
+    if (!displayedChains) {
+      return
+    }
+
+    if (displayedChains === 'chains') {
+      setDisplayedChains('resultChains');
+    } else {
+      setDisplayedChains('chains');
+    }
+  }
+
+  const handleLoadExampleClick = (num: number) => {
+    setSelectedPoint(null);
+    setSelectedEdge(null);
+    setDisplayedChains(null);
+
+    const data: IData = require(`./data/example${num}.json`);
+
+    setPoints(data.points);
+    setEdges(data.edges);
   }
 
   return (
@@ -150,10 +183,20 @@ function App() {
               edges={edges}
               selectedEdge={selectedEdge}
             />
-            <Chains
-              chains={chains}
-              selectedEdge={selectedEdge}
-            />
+
+            {
+              displayedChains && displayedChains === 'chains'
+              ? <Chains
+                  chains={chains}
+                  selectedEdge={selectedEdge}
+                />
+              : displayedChains && displayedChains === 'resultChains'
+                ? <Chains
+                    chains={resultChains}
+                    selectedEdge={selectedEdge}
+                  />
+                : null
+            }
           </Layer>
           
           <Layer>
@@ -168,7 +211,7 @@ function App() {
 
           <div className='justify-self-left'>
             {
-              points.length > 1 && selectedPoint && !hasAdjacentSegment(selectedPoint, edges)
+              points.length > 2 && selectedPoint && !hasAdjacentSegment(selectedPoint, edges)
               ? <button
                   className="inline-block bg-green-700 p-3 rounded-md hover:bg-green-800"
                   onClick={handleRunClick}
@@ -185,6 +228,25 @@ function App() {
           </div>
 
           <div className='justify-self-right'>
+
+            <button
+              className="inline-block bg-blue-400 p-3 rounded-md mr-4 hover:bg-blue-500"
+              onClick={() => handleLoadExampleClick(1)}
+            >
+              /\ Load example 1 /\
+            </button>
+
+            <button
+              className="inline-block bg-blue-400 p-3 rounded-md hover:bg-blue-500"
+              onClick={() => handleLoadExampleClick(2)}
+            >
+              /\ Load example 2 /\
+            </button>
+
+            <div
+                className="inline-block h-4 w-0.5 bg-slate-500 mx-4">
+            </div>
+
             {
               points.length === 0
               ? <button
@@ -204,23 +266,46 @@ function App() {
             {
               savedPoints.length === 0
               ? <button
-                  className="inline-block bg-green-900 p-3 rounded-md mr-4 cursor-not-allowed"
+                  className="inline-block bg-green-900 p-3 rounded-md cursor-not-allowed"
                 >
                   /\ Load saved graph /\
                 </button>
               : <button
-                  className="inline-block bg-green-700 p-3 rounded-md mr-4 hover:bg-green-800"
+                  className="inline-block bg-green-700 p-3 rounded-md hover:bg-green-800"
                   onClick={handleLoadClick}
                 >
                   /\ Load saved graph /\
                 </button>
             }
 
+            <div
+              className="inline-block h-4 w-0.5 bg-slate-500 mx-4">
+            </div>
+
+            {
+              displayedChains === null
+              ? <button
+                  className="inline-block bg-zinc-800 p-3 rounded-md cursor-not-allowed"
+                >
+                  No chains to show
+                </button>
+              : <button
+                  className="inline-block bg-zinc-400 p-3 rounded-md hover:bg-zinc-500"
+                  onClick={handleToggleChainsClick}
+                >
+                  Show {displayedChains === 'chains' ? "enclozing chains" : "all chains"}
+                </button>
+            }
+
+            <div
+              className="inline-block h-4 w-0.5 bg-slate-500 mx-4">
+            </div>
+
             <button
               className="inline-block bg-slate-300 p-3 rounded-md mr-4 hover:bg-slate-400"
               onClick={handleClearClick}
             >
-              Clear
+              Clear all
             </button>
 
             {
@@ -228,16 +313,16 @@ function App() {
               ? <button
                   className="inline-block bg-yellow-800 p-3 rounded-md mr-4 cursor-not-allowed"
                 >
-                  Clear chains
+                  Clear all chains
                 </button>
-            : <button
-                className="inline-block bg-yellow-400 p-3 rounded-md mr-4 hover:bg-yellow-500"
-                onClick={handleClearChainsClick}
-              >
-                Clear chains
-              </button>
+              : <button
+                  className="inline-block bg-yellow-400 p-3 rounded-md mr-4 hover:bg-yellow-500"
+                  onClick={handleClearChainsClick}
+                >
+                  Clear all chains
+                </button>
             }
-            
+
             {
               selectedPoint || selectedEdge
               ? <button

@@ -95,8 +95,42 @@ export function isBetweenSegments(le: Segment | null, re: Segment | null, p: Poi
     }
 }
 
-export function leftMostPoint(points: Point[]): Point {
-    return points.sort((p1, p2) => p1.x === p2.x ? p1.y - p2.y : p1.x - p2.x)[0];
+export function leftMostPoint(points: Point[], relP: Point): Point {
+    let maxCos = 0;
+    let minCos = Infinity;
+    let leftPoint = points[0];
+    let hasLeftPoints = false;
+
+    for (const p of points) {
+        if (p.x < relP.x) {
+            hasLeftPoints = true;
+            const projDist = relP.x - p.x;
+            const cos = projDist / distanceToPoint(p, relP);
+
+            if (maxCos < cos) {
+                maxCos = cos;
+                leftPoint = p;
+            }
+        } else {
+            if (hasLeftPoints) {
+                continue;
+            }
+
+            const projDist = p.x - relP.x;
+            const cos = projDist / distanceToPoint(p, relP);
+
+            if (cos < minCos) {
+                minCos = cos;
+                leftPoint = p;
+            }
+        }
+    }
+
+    return leftPoint;
+
+    // return points.sort((p1, p2) => {
+    //     return p1.x === p2.x ? p1.y - p2.y : p1.x - p2.x
+    // })[0];
 }
 
 export function hasAdjacentSegment(p: Point, segments: Segment[]): boolean {

@@ -1,8 +1,8 @@
-import { Edge, Vertex } from "./geometry";
+import { Point, Edge } from "./geometry";
 
-interface data {
-    vertices: Vertex[];
+interface IData {
+    points: Point[];
     edges: Edge[];
 }
 
-export default data;
+export default IData;

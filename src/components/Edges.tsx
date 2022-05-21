@@ -12,6 +12,7 @@ interface IProps {
     lineScribeColor?: string,
     selectedLineScribeColor?: string,
     lineWidth?: number,
+    showScribes?: boolean
 }
 
 function Edges({
@@ -21,13 +22,15 @@ function Edges({
     selectedEdgeColor,
     lineScribeColor,
     selectedLineScribeColor,
-    lineWidth
+    lineWidth,
+    showScribes
 }: IProps) {
     edgeColor = edgeColor ?? colorsConfig.edge;
     selectedEdgeColor = selectedEdgeColor ?? colorsConfig.selectedEdge;
     lineScribeColor = lineScribeColor ?? colorsConfig.lineScribe;
     selectedLineScribeColor = selectedLineScribeColor ?? colorsConfig.selectedLineScribe;
     lineWidth = lineWidth ?? config.lineWidth;
+    showScribes = showScribes ?? true;
     
     return (
         <Group>
@@ -42,14 +45,16 @@ function Edges({
                />)
             }
             {
-               edges.map((e) => <Text
-                text={e.value.toString()}
-                fontSize={15}
-                stroke={e === selectedEdge ? selectedLineScribeColor : lineScribeColor}
-                x={(e.from.x + e.to.x) / 2 + config.lineScribeShift}
-                y={(e.from.y + e.to.y) / 2 + config.lineScribeShift}
-                key={`scribe-${pointKey(e.from)}-${pointKey(e.to)}`}
-                />)
+                showScribes
+                ? edges.map((e) => <Text
+                    text={e.value.toString()}
+                    fontSize={15}
+                    stroke={e === selectedEdge ? selectedLineScribeColor : lineScribeColor}
+                    x={(e.from.x + e.to.x) / 2 + config.lineScribeShift}
+                    y={(e.from.y + e.to.y) / 2 + config.lineScribeShift}
+                    key={`scribe-${pointKey(e.from)}-${pointKey(e.to)}`}
+                  />)
+                : null
             }
           </Group>
     );

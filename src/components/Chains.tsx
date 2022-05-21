@@ -18,6 +18,7 @@ function Chains({chains, selectedEdge}: IProps) {
                     selectedEdge={selectedEdge}
                     edgeColor={colorsConfig.chainColors[idx % colorsConfig.chainColors.length]}
                     lineWidth={config.basicLineWidth + (chains.length - idx) * config.lineWidthShift}
+                    showScribes={false}
                     key={`chain_${idx}`}
                 />)
             }

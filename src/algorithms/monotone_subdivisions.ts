@@ -17,8 +17,6 @@ export const locatePoint = (p: Point, points: Point[], edges: Edge[]): ILocatePo
     graph = addEdges(graph, edges);
     
     if (!isRegular(graph, sortedVertices)) {
-        console.log('Not regular');
-        
         graph = regularize(graph, sortedVertices);
     }
     
@@ -89,8 +87,6 @@ const regularize = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
 
     // \/ Top - Bottom \/
     for (let i = sortedVertices.length - 2; i >= 0; i--) {
-        console.log('checking \\/', sortedVertices[i].key);
-        
         if (graph.outDegree(sortedVertices[i].key) === 0) {
             console.log(nearestUpHalfPlaneVertex(graph, sortedVertices[i]));
             
@@ -100,7 +96,6 @@ const regularize = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     
     // /\ Bottom - Top /\
     for (let i = 1; i < sortedVertices.length; i++) {
-        console.log('checking /\\', sortedVertices[i].key);
         if (graph.inDegree(sortedVertices[i].key) === 0) {
             console.log(nearestDownHalfPlaneVertex(graph, sortedVertices[i]));
             graph.addEdge(nearestDownHalfPlaneVertex(graph, sortedVertices[i]).key, sortedVertices[i].key, 1);
@@ -190,7 +185,7 @@ const balanceGraph = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
 const balanceDownUp = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     for (let i = 1; i < sortedVertices.length - 1; i++) {
             if (inWeight(graph, sortedVertices[i]) > outWeight(graph, sortedVertices[i])) {
-            const leftPoint = leftMostPoint(outPoints(graph, sortedVertices[i]));
+            const leftPoint = leftMostPoint(outPoints(graph, sortedVertices[i]), sortedVertices[i].point);
             const newEdgeValue = 1 + inWeight(graph, sortedVertices[i]) - outWeight(graph, sortedVertices[i]);
             graph.setEdge(sortedVertices[i].key, pointKey(leftPoint), newEdgeValue);
         }
@@ -202,7 +197,7 @@ const balanceDownUp = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
 const balanceUpDown = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     for (let i = sortedVertices.length - 2; i > 0; i--) {
         if (inWeight(graph, sortedVertices[i]) < outWeight(graph, sortedVertices[i])) {
-            const leftPoint = leftMostPoint(inPoints(graph, sortedVertices[i]));
+            const leftPoint = leftMostPoint(inPoints(graph, sortedVertices[i]), sortedVertices[i].point);
             const newEdgeValue = 1 + outWeight(graph, sortedVertices[i]) - inWeight(graph, sortedVertices[i]);
             graph.setEdge(pointKey(leftPoint), sortedVertices[i].key, newEdgeValue);
         }
@@ -265,7 +260,7 @@ const locateChains = (graph: IGraph, sortedVertices: Vertex[]): Chain[] => {
 
         while (currV.key !== sortedVertices[sortedVertices.length - 1].key) {
             prevV = currV;
-            let currP = leftMostPoint(outPoints(graph, currV));
+            let currP = leftMostPoint(outPoints(graph, currV), currV.point);
             currV = {point: currP, key: pointKey(currP)};
 
             chain.push({from: prevV.point, to: currV.point, value: 1})
@@ -280,7 +275,6 @@ const locateChains = (graph: IGraph, sortedVertices: Vertex[]): Chain[] => {
         chains.push(chain);
     }
 
-    // TODO: remove duplicate chains
     return chains;
 }
 
