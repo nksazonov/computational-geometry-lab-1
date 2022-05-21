@@ -7,6 +7,7 @@ import {
   hasAdjacentSegment,
   nearestPoint as getNearestPoint,
   nearestSegment as getNearestEdge,
+  segmentsContain,
 } from './algorithms/point-locations';
 import { locatePoint, pointKey } from './algorithms/monotone_subdivisions';
 import { transformChains, transformEdges, transformPoint, transformPoints } from './algorithms/transform';
@@ -75,8 +76,7 @@ function App() {
           setSelectedPoint(null);
         } else {
           // if selected is not the same as nearest AND edge is not already present - create edge to it
-          if (!edges.includes({from: selectedPoint, to: nearestPoint, value: 1}) &&
-          !edges.includes({from: nearestPoint, to: selectedPoint, value: 1})) {
+          if (!segmentsContain(selectedPoint, edges)) {
             setEdges([...edges, {from: selectedPoint, to: nearestPoint, value: 1}]);
             setSelectedPoint(null);
           }

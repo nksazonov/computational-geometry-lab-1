@@ -16,6 +16,17 @@ export function nearestPoint(point: Point, points: Point[], epsilon: number): Po
     return nearestPoint;
 }
 
+export function segmentsContain(p: Point, segments: Segment[]): boolean {
+    for (const s of segments) {
+        if (pointKey(s.from) === pointKey(p) ||
+        pointKey(s.to) === pointKey(p)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 export function nearestSegment(point: Point, Segments: Segment[], epsilon: number): Segment | null {
     let nearestDistance = Infinity;
     let nearestSegment = null;
