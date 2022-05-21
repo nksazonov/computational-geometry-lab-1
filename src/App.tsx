@@ -171,7 +171,7 @@ function App() {
   }
 
   return (
-    <div className="w-screen h-screen bg-slate-700 p-4 border-box">
+    <div className="w-screen h-screen bg-slate-700 p-4 border-box text-xs 2xl:text-base">
         <Stage
           width={window.innerWidth * config.canvasWidthMultiplier}
           height={window.innerHeight * config.canvasHeightMultiplier}
