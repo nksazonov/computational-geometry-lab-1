@@ -2,9 +2,15 @@ import IGraph from "../types/graph";
 // @ts-ignore
 import Graph from "graph.js";
 import { Point, Edge, Vertex, Chain } from "../types/geometry";
-import { distanceToSegment, distanceToPoint, isBetweenSegmentEnds, isBetweenSegments, isLeftSegment, leftMostPoint } from "./point-locations";
+import { distanceToSegment, distanceToPoint, isBetweenSegmentEndsX, isBetweenSegments, isLeftSegment, leftMostPoint, isRightSegment, isBetweenSegmentEndsY } from "./point-locations";
 
-export const locatePoint = (p: Point, points: Point[], edges: Edge[]): Chain[] => {
+interface ILocatePointResult {
+    betweenChains: Chain[],
+    chains: Chain[],
+    edges: Edge[],
+}
+
+export const locatePoint = (p: Point, points: Point[], edges: Edge[]): ILocatePointResult => {
     let graph: IGraph = new Graph();
     const sortedVertices = pointsToVertices(sortPointsByY(points));
     graph = addVertices(graph, sortedVertices);
@@ -18,20 +24,20 @@ export const locatePoint = (p: Point, points: Point[], edges: Edge[]): Chain[] =
     
     balanceGraph(graph, sortedVertices);
 
-    // let changedEdges = [];
+    let changedEdges = [];
     
-    // // @ts-ignore
-    // for (let [from, to, value] of graph.edges()) {
-    //     changedEdges.push({from: pointFromKey(from), to: pointFromKey(to), value})
-    // }
+    // @ts-ignore
+    for (let [from, to, value] of graph.edges()) {
+        changedEdges.push({from: pointFromKey(from), to: pointFromKey(to), value})
+    }
     
-    // return changedEdges;
-
     const chains = locateChains(graph, sortedVertices);
-    return chains;
-    /*
-    return locatePointBetweenChains(p, chains);
-    */
+
+    return {
+        betweenChains: locatePointBetweenChains(p, chains),
+        chains,
+        edges: changedEdges
+    };
 }
 
 export const pointKey = (p: Point) => `${p.x}_${p.y}`;
@@ -155,7 +161,7 @@ const nearestEdges = (graph: IGraph, vertex: Vertex): INearestEdges => {
 
     // @ts-ignore
     for (let [from, to] of graph.edges()) {
-        if (!isBetweenSegmentEnds({from, to}, vertex.point)) {
+        if (!isBetweenSegmentEndsX({from, to}, vertex.point)) {
             continue;
         }
 
@@ -301,4 +307,77 @@ const chainsEqual = (c1: Chain, c2: Chain): boolean => {
 
         return true;
     }
+}
+
+const locatePointBetweenChains = (p: Point, chains: Chain[]): Chain[] => {
+    if (chains.length === 1) {
+        return chains;
+    }
+
+    let lIdx = 0;
+    let rIdx = chains.length - 1;
+
+    let found = false;
+
+    while (!found) {
+        let cmpLIdx = Math.floor((lIdx + rIdx) / 2);
+        let cpmRIdx = cmpLIdx + 1;  
+        
+        let pointLocation = pointRelativeToChains(p, chains[cmpLIdx], chains[cpmRIdx]);
+        
+        if (pointLocation === 0) {
+            return [chains[cmpLIdx], chains[cpmRIdx]];
+        } else if (pointLocation < 0) {
+            lIdx = cpmRIdx;
+        } else {
+            rIdx = cmpLIdx;
+        }
+
+        if (cmpLIdx === lIdx) {
+            return [chains[lIdx]];   
+        }
+
+        if (cpmRIdx === rIdx) {
+            return [chains[rIdx]];
+        }
+    }
+
+    return [];
+}
+
+/*
+    lc - p - rc => 0
+    lc - rc - p => -1
+    p - lc - rc => 1
+*/
+const pointRelativeToChains = (p: Point, lc: Chain, rc: Chain): number => {
+    if (isLeftChain(lc, p) && isRightChain(rc, p)) {
+        return 0;
+    } else if (isLeftChain(lc, p) && !isRightChain(rc, p)) {
+        return -1;
+    } else if (!isLeftChain(lc, p) && isRightChain(rc, p)) {
+        return 1;
+    } else {
+        throw new Error("invalid point relative to chains location");
+    }
+}
+
+const isLeftChain = (c: Chain, p: Point): boolean => {
+    for (const edge of c) {
+        if (isBetweenSegmentEndsY(edge, p)) {
+            return isLeftSegment(edge, p);
+        }
+    }
+
+    return true;
+}
+
+const isRightChain = (c: Chain, p: Point): boolean => {
+    for (const edge of c) {
+        if (isBetweenSegmentEndsY(edge, p)) {
+            return isRightSegment(edge, p);
+        }
+    }
+
+    return true;
 }

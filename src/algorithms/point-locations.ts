@@ -1,4 +1,5 @@
 import {Point, Segment} from '../types/geometry';
+import { pointKey } from './monotone_subdivisions';
 
 export function nearestPoint(point: Point, points: Point[], epsilon: number): Point | null {
     let nearestDistance = Infinity;
@@ -20,7 +21,7 @@ export function nearestSegment(point: Point, Segments: Segment[], epsilon: numbe
     let nearestSegment = null;
     
     Segments.forEach(e => {
-        if (isBetweenSegmentEnds(e, point)) {
+        if (isBetweenSegmentEndsX(e, point)) {
             const distance = distanceToSegment(point, e);
             if (distance < epsilon && distance < nearestDistance) {
                 nearestDistance = distance;
@@ -49,7 +50,7 @@ export function isAboveOrRight(point: Point, p1: Point): boolean {
     return point.y < p1.y ? true : point.x < p1.x;
 }
 
-export function isLeftSegment(e: Segment, p: Point): boolean {
+export function isLeftSegment(s: Segment, p: Point): boolean {
     /*
         delimiter ... is + when p1-p2-p3 is left turn, and - when p1-p2-p3 is right turn
         | x1 y1 1 |
@@ -60,17 +61,26 @@ export function isLeftSegment(e: Segment, p: Point): boolean {
         p2 - Segment.from
         p3 - point
     */
-    return (e.to.x * e.from.y * 1 + e.to.y * 1 * p.x + 1 * e.from.x * p.y -
-        1 * e.from.y * p.x - e.to.y * e.from.x * 1 - e.to.x * 1 * p.y) > 0;
+    if (s.from.x === s.to.x && s.from.x === p.x) {
+        return s.from.x <= p.x && s.to.x <= p.x;
+    }
+
+    return (s.to.x * s.from.y * 1 + s.to.y * 1 * p.x + 1 * s.from.x * p.y -
+        1 * s.from.y * p.x - s.to.y * s.from.x * 1 - s.to.x * 1 * p.y) > 0;
 }
 
 export function isRightSegment(e: Segment, p: Point): boolean {
     return !isLeftSegment(e, p);
 }
 
-export function isBetweenSegmentEnds(e: Segment, p: Point): boolean {
+export function isBetweenSegmentEndsX(e: Segment, p: Point): boolean {
     const [from, to] = e.from.x < e.to.x ? [e.from, e.to] : [e.to, e.from];
     return from.x <= p.x && p.x <= to.x;
+}
+
+export function isBetweenSegmentEndsY(s: Segment, p: Point): boolean {
+    const [from, to] = s.from.y < s.to.y ? [s.from, s.to] : [s.to, s.from];
+    return from.y <= p.y && p.y <= to.y;
 }
 
 export function isBetweenSegments(le: Segment | null, re: Segment | null, p: Point): boolean {
@@ -87,4 +97,14 @@ export function isBetweenSegments(le: Segment | null, re: Segment | null, p: Poi
 
 export function leftMostPoint(points: Point[]): Point {
     return points.sort((p1, p2) => p1.x === p2.x ? p1.y - p2.y : p1.x - p2.x)[0];
+}
+
+export function hasAdjacentSegment(p: Point, segments: Segment[]): boolean {
+    for (const s of segments) {
+        if (pointKey(s.from) === pointKey(p) || pointKey(s.to) === pointKey(p)) {
+            return true;
+        }
+    }
+
+    return false;
 }

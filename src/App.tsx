@@ -3,6 +3,7 @@ import { Layer, Stage } from 'react-konva';
 import config from './config';
 import {Chain, Edge, Point, Segment} from './types/geometry';
 import {
+  hasAdjacentSegment,
   nearestPoint as getNearestPoint,
   nearestSegment as getNearestEdge,
 } from './algorithms/point-locations';
@@ -18,6 +19,9 @@ function App() {
   const [chains, setChains] = useState([] as Chain[]);
   const [selectedPoint, setSelectedPoint] = useState(null as Point | null);
   const [selectedEdge, setSelectedEdge] = useState(null as Segment | null);
+
+  const [savedPoints, savePoints] = useState([] as Point[]);
+  const [savedEdges, saveEdges] = useState([] as Edge[]);
 
   const handleStageClick = (e: any) => {
     let {x, y} = e.currentTarget.getPointerPosition();
@@ -66,9 +70,12 @@ function App() {
           // if selected is the same as nearest - deselect
           setSelectedPoint(null);
         } else {
-          // if selected is not the same as nearest - create edge to it
-          setEdges([...edges, {from: selectedPoint, to: nearestPoint, value: 1}]);
-          setSelectedPoint(null);
+          // if selected is not the same as nearest AND edge is not already present - create edge to it
+          if (!edges.includes({from: selectedPoint, to: nearestPoint, value: 1}) &&
+          !edges.includes({from: nearestPoint, to: selectedPoint, value: 1})) {
+            setEdges([...edges, {from: selectedPoint, to: nearestPoint, value: 1}]);
+            setSelectedPoint(null);
+          }
         }
       } else {
         // if no point was selected - select point, unselect edge
@@ -99,13 +106,35 @@ function App() {
   }
 
   const handleRunClick = () => {
+    if (selectedPoint === null) {
+      return;
+    }
+
+    const result = locatePoint(
+      transformPoint(selectedPoint),
+      transformPoints(points.filter((p) => pointKey(p) !== pointKey(selectedPoint))),
+      transformEdges(edges)
+    );
+
+    setEdges(transformEdges(result.edges));
+
     setChains(transformChains(
-      locatePoint(
-        transformPoint(points[0]),
-        transformPoints(points),
-        transformEdges(edges)
-      )
+      result.betweenChains
     ));
+  }
+
+  const handleSaveClick = () => {
+    savePoints(points);
+    saveEdges(edges);
+  }
+  
+  const handleLoadClick = () => {
+    setPoints(savedPoints);
+    setEdges(savedEdges);
+  }
+
+  const handleClearChainsClick = () => {
+    setChains([]);
   }
 
   return (
@@ -117,17 +146,14 @@ function App() {
           onClick={handleStageClick}
         >
           <Layer>
-            {
-              chains.length !== 0
-              ? <Chains
-                  chains={chains}
-                  selectedEdge={selectedEdge}
-                />
-              : <Edges
-                  edges={edges}
-                  selectedEdge={selectedEdge}
-                />
-            }
+            <Edges
+              edges={edges}
+              selectedEdge={selectedEdge}
+            />
+            <Chains
+              chains={chains}
+              selectedEdge={selectedEdge}
+            />
           </Layer>
           
           <Layer>
@@ -142,7 +168,7 @@ function App() {
 
           <div className='justify-self-left'>
             {
-              points.length > 1
+              points.length > 1 && selectedPoint && !hasAdjacentSegment(selectedPoint, edges)
               ? <button
                   className="inline-block bg-green-700 p-3 rounded-md hover:bg-green-800"
                   onClick={handleRunClick}
@@ -151,7 +177,6 @@ function App() {
                 </button>
               : <button
                   className="inline-block bg-green-900 p-3 rounded-md cursor-not-allowed"
-                  onClick={handleRunClick}
                 >
                   Run Monotone subdivisions method
                 </button>
@@ -160,12 +185,58 @@ function App() {
           </div>
 
           <div className='justify-self-right'>
+            {
+              points.length === 0
+              ? <button
+                  className="inline-block bg-green-900 p-3 rounded-md mr-4 cursor-not-allowed"
+                >
+                  \/ Save graph \/
+                </button>
+              : <button
+                  className="inline-block bg-green-700 p-3 rounded-md mr-4 hover:bg-green-800"
+                  onClick={handleSaveClick}
+                >
+                  \/ Save graph \/
+                </button>
+            }
+
+
+            {
+              savedPoints.length === 0
+              ? <button
+                  className="inline-block bg-green-900 p-3 rounded-md mr-4 cursor-not-allowed"
+                >
+                  /\ Load saved graph /\
+                </button>
+              : <button
+                  className="inline-block bg-green-700 p-3 rounded-md mr-4 hover:bg-green-800"
+                  onClick={handleLoadClick}
+                >
+                  /\ Load saved graph /\
+                </button>
+            }
+
             <button
               className="inline-block bg-slate-300 p-3 rounded-md mr-4 hover:bg-slate-400"
               onClick={handleClearClick}
             >
               Clear
             </button>
+
+            {
+              chains.length === 0
+              ? <button
+                  className="inline-block bg-yellow-800 p-3 rounded-md mr-4 cursor-not-allowed"
+                >
+                  Clear chains
+                </button>
+            : <button
+                className="inline-block bg-yellow-400 p-3 rounded-md mr-4 hover:bg-yellow-500"
+                onClick={handleClearChainsClick}
+              >
+                Clear chains
+              </button>
+            }
             
             {
               selectedPoint || selectedEdge
@@ -173,9 +244,11 @@ function App() {
                   className="inline-block bg-red-600 p-3 rounded-md hover:bg-red-700"
                   onClick={handleDeleteClick}
                 >
-                  X &nbsp;&nbsp;Delete &nbsp;&nbsp;X
+                  X &nbsp;&nbsp;Delete&nbsp;&nbsp; X
                 </button>
-              : <button disabled className="inline-block bg-red-900 p-3 rounded-md cursor-not-allowed text-slate-900">X &nbsp;&nbsp;Delete &nbsp;&nbsp;X</button>
+              : <button disabled className="inline-block bg-red-900 p-3 rounded-md cursor-not-allowed text-slate-900">
+                  X &nbsp;&nbsp;Delete&nbsp;&nbsp; X
+                </button>
             }
           </div>
 
