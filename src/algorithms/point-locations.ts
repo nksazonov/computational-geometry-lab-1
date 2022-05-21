@@ -1,4 +1,4 @@
-import {Point, Edge} from '../types/geometry';
+import {Point, Segment} from '../types/geometry';
 
 export function nearestPoint(point: Point, points: Point[], epsilon: number): Point | null {
     let nearestDistance = Infinity;
@@ -15,24 +15,24 @@ export function nearestPoint(point: Point, points: Point[], epsilon: number): Po
     return nearestPoint;
 }
 
-export function nearestEdge(point: Point, edges: Edge[], epsilon: number): Edge | null {
+export function nearestSegment(point: Point, Segments: Segment[], epsilon: number): Segment | null {
     let nearestDistance = Infinity;
-    let nearestEdge = null;
+    let nearestSegment = null;
     
-    edges.forEach(e => {
-        if (isBetweenEdgeEnds(e, point)) {
-            const distance = distanceToEdge(point, e);
+    Segments.forEach(e => {
+        if (isBetweenSegmentEnds(e, point)) {
+            const distance = distanceToSegment(point, e);
             if (distance < epsilon && distance < nearestDistance) {
                 nearestDistance = distance;
-                nearestEdge = e;
+                nearestSegment = e;
             }
         }
     });
 
-    return nearestEdge;
+    return nearestSegment;
 }
 
-export function distanceToEdge(p: Point, e: Edge): number {
+export function distanceToSegment(p: Point, e: Segment): number {
     return Math.abs((e.to.x - e.from.x)*(e.from.y - p.y) - (e.from.x - p.x)*(e.to.y - e.from.y)) /
     Math.sqrt((e.to.x - e.from.x)**2 + (e.to.y - e.from.y)**2);
 }
@@ -49,39 +49,39 @@ export function isAboveOrRight(point: Point, p1: Point): boolean {
     return point.y < p1.y ? true : point.x < p1.x;
 }
 
-export function isLeftEdge(e: Edge, p: Point): boolean {
+export function isLeftSegment(e: Segment, p: Point): boolean {
     /*
         delimiter ... is + when p1-p2-p3 is left turn, and - when p1-p2-p3 is right turn
         | x1 y1 1 |
         | x2 y2 1 |
         | x3 y3 1 |
 
-        p1 - edge.to
-        p2 - edge.from
+        p1 - Segment.to
+        p2 - Segment.from
         p3 - point
     */
     return (e.to.x * e.from.y * 1 + e.to.y * 1 * p.x + 1 * e.from.x * p.y -
         1 * e.from.y * p.x - e.to.y * e.from.x * 1 - e.to.x * 1 * p.y) > 0;
 }
 
-export function isRightEdge(e: Edge, p: Point): boolean {
-    return !isLeftEdge(e, p);
+export function isRightSegment(e: Segment, p: Point): boolean {
+    return !isLeftSegment(e, p);
 }
 
-export function isBetweenEdgeEnds(e: Edge, p: Point): boolean {
+export function isBetweenSegmentEnds(e: Segment, p: Point): boolean {
     const [from, to] = e.from.x < e.to.x ? [e.from, e.to] : [e.to, e.from];
     return from.x <= p.x && p.x <= to.x;
 }
 
-export function isBetweenEdges(le: Edge | null, re: Edge | null, p: Point): boolean {
+export function isBetweenSegments(le: Segment | null, re: Segment | null, p: Point): boolean {
     if (!le && !re) {
         return true;
     } else if (!le) {
-        return isRightEdge(re!, p);
+        return isRightSegment(re!, p);
     } else if (!re) {
-        return isLeftEdge(le, p);
+        return isLeftSegment(le, p);
     } else {
-        return isLeftEdge(le, p) && isRightEdge(re, p);
+        return isLeftSegment(le, p) && isRightSegment(re, p);
     }
 }
 

@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { Circle, Layer, Line, Stage } from 'react-konva';
-import config, { colorsConfig } from './config';
-import {Edge, Point} from './types/geometry';
+import { Layer, Stage } from 'react-konva';
+import config from './config';
+import {Chain, Edge, Point, Segment} from './types/geometry';
 import {
   nearestPoint as getNearestPoint,
-  nearestEdge as getNearestEdge,
+  nearestSegment as getNearestEdge,
 } from './algorithms/point-locations';
 import { locatePoint, pointKey } from './algorithms/monotone_subdivisions';
-import { transformEdges, transformPoint, transformPoints } from './algorithms/transform';
+import { transformChains, transformEdges, transformPoint, transformPoints } from './algorithms/transform';
+import Chains from './components/Chains';
+import Edges from './components/Edges';
+import Points from './components/Points';
 
 function App() {
   const [points, setPoints] = useState([] as Point[]);
   const [edges, setEdges] = useState([] as Edge[]);
+  const [chains, setChains] = useState([] as Chain[]);
   const [selectedPoint, setSelectedPoint] = useState(null as Point | null);
-  const [selectedEdge, setSelectedEdge] = useState(null as Edge | null);
+  const [selectedEdge, setSelectedEdge] = useState(null as Segment | null);
 
   const handleStageClick = (e: any) => {
     let {x, y} = e.currentTarget.getPointerPosition();
@@ -36,7 +40,7 @@ function App() {
 
         if (selectedPoint !== null) {
           // if point was selected - create Edge to it
-          setEdges([...edges, {from: selectedPoint, to: clickedPoint}]);
+          setEdges([...edges, {from: selectedPoint, to: clickedPoint, value: 1}]);
           setSelectedPoint(null);
         }
       } else {
@@ -63,7 +67,7 @@ function App() {
           setSelectedPoint(null);
         } else {
           // if selected is not the same as nearest - create edge to it
-          setEdges([...edges, {from: selectedPoint, to: nearestPoint}]);
+          setEdges([...edges, {from: selectedPoint, to: nearestPoint, value: 1}]);
           setSelectedPoint(null);
         }
       } else {
@@ -78,6 +82,7 @@ function App() {
   const handleClearClick = () => {
     setPoints([]);
     setEdges([]);
+    setChains([]);
     setSelectedPoint(null);
     setSelectedEdge(null);
   }
@@ -94,15 +99,13 @@ function App() {
   }
 
   const handleRunClick = () => {
-    setEdges(transformEdges(
+    setChains(transformChains(
       locatePoint(
         transformPoint(points[0]),
         transformPoints(points),
         transformEdges(edges)
       )
     ));
-    console.log(edges);
-    
   }
 
   return (
@@ -115,27 +118,23 @@ function App() {
         >
           <Layer>
             {
-              edges.map((e) => <Line
-                points={[e.from.x, e.from.y, e.to.x, e.to.y]}
-                strokeWidth={config.lineWidth}
-                stroke={e === selectedEdge ? colorsConfig.selectedEdge : colorsConfig.edge}
-                lineCap="round"
-                lineJoin="round"
-                key={`link-${pointKey(e.from)}-${pointKey(e.to)}`}
-               />)
+              chains.length !== 0
+              ? <Chains
+                  chains={chains}
+                  selectedEdge={selectedEdge}
+                />
+              : <Edges
+                  edges={edges}
+                  selectedEdge={selectedEdge}
+                />
             }
           </Layer>
-
+          
           <Layer>
-            {
-              points.map(p => <Circle
-                x={p.x}
-                y={p.y}
-                radius={config.pointRadius}
-                fill={p === selectedPoint ? colorsConfig.selectedPoint : colorsConfig.point}
-                key={`point-${pointKey(p)}`}
-              />)
-            }
+            <Points
+              points={points}
+              selectedPoint={selectedPoint}
+            />
           </Layer>
         </Stage>
 

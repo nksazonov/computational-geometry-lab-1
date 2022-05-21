@@ -3,9 +3,18 @@ export interface Point {
     y: number;
 }
 
-export interface Vertex extends Point {};
+export interface Vertex {
+    point: Point,
+    key: string
+}
 
-export interface Edge {
-    from: Vertex;
-    to: Vertex;
+export type Chain = Edge[];
+
+export interface Segment {
+    from: Point;
+    to: Point;
+}
+
+export interface Edge extends Segment {
+    value: number;
 }

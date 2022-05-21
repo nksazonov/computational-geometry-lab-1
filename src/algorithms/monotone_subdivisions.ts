@@ -1,19 +1,13 @@
 import IGraph from "../types/graph";
 // @ts-ignore
 import Graph from "graph.js";
-import { Point, Edge } from "../types/geometry";
-import { distanceToEdge, distanceToPoint, isBetweenEdgeEnds, isBetweenEdges, isLeftEdge, leftMostPoint } from "./point-locations";
+import { Point, Edge, Vertex, Chain } from "../types/geometry";
+import { distanceToSegment, distanceToPoint, isBetweenSegmentEnds, isBetweenSegments, isLeftSegment, leftMostPoint } from "./point-locations";
 
-interface Vertex {
-    point: Point,
-    key: string
-}
-
-export const locatePoint = (p: Point, points: Point[], edges: Edge[]): Edge[] => {
+export const locatePoint = (p: Point, points: Point[], edges: Edge[]): Chain[] => {
     let graph: IGraph = new Graph();
     const sortedVertices = pointsToVertices(sortPointsByY(points));
     graph = addVertices(graph, sortedVertices);
-    // TODO: if edge.from is higher than edge.to - rotate
     graph = addEdges(graph, edges);
     
     if (!isRegular(graph, sortedVertices)) {
@@ -24,19 +18,18 @@ export const locatePoint = (p: Point, points: Point[], edges: Edge[]): Edge[] =>
     
     balanceGraph(graph, sortedVertices);
 
-    let changedEdges = [];
+    // let changedEdges = [];
     
-    // @ts-ignore
-    for (let [from, to, value] of graph.edges()) {
-        console.log(`edge: (${from}) - (${to}), ${value}`);
-        
-        changedEdges.push({from: pointFromKey(from), to: pointFromKey(to)})
-    }
+    // // @ts-ignore
+    // for (let [from, to, value] of graph.edges()) {
+    //     changedEdges.push({from: pointFromKey(from), to: pointFromKey(to), value})
+    // }
     
-    return changedEdges;
+    // return changedEdges;
 
+    const chains = locateChains(graph, sortedVertices);
+    return chains;
     /*
-    const chains = locateChains(graph);
     return locatePointBetweenChains(p, chains);
     */
 }
@@ -47,6 +40,7 @@ const pointFromKey = (key: string): Point => {
     const [x, y] = key.split('_').map(s => Number(s));
     return {x, y};
 }
+export const edgeKey = (e: Edge) => `${pointKey(e.from)}-${pointKey(e.to)}`
 
 const sortPointsByY = (points: Point[]): Point[] => points.sort((a, b) => a.y !== b.y ? a.y - b.y : a.x - b.x);
 
@@ -136,7 +130,7 @@ const _nearestHalfPlaneVertex = (graph: IGraph, vertex: Vertex, upHalfPlane: boo
         // }
 
         // @ts-ignore
-        if (p.y < vertex.point.y ^ upHalfPlane && isBetweenEdges(nearestLeftEdge, nearestRightEdge, p)) {
+        if (p.y < vertex.point.y ^ upHalfPlane && isBetweenSegments(nearestLeftEdge, nearestRightEdge, p)) {
             if (distanceToPoint(p, vertex.point) < nearestDistance) {
                 nearestDistance = distanceToPoint(p, vertex.point);
                 nearestVertex = {point: p, key};
@@ -161,19 +155,19 @@ const nearestEdges = (graph: IGraph, vertex: Vertex): INearestEdges => {
 
     // @ts-ignore
     for (let [from, to] of graph.edges()) {
-        if (!isBetweenEdgeEnds({from, to}, vertex.point)) {
+        if (!isBetweenSegmentEnds({from, to}, vertex.point)) {
             continue;
         }
 
-        if (isLeftEdge({from, to}, vertex.point)) {
-            if (distanceToEdge(vertex.point, {from, to}) < nearestLeftDistance) {
-                nearestLeftDistance = distanceToEdge(vertex.point, {from, to});
-                nearestLeftEdge = {from, to};
+        if (isLeftSegment({from, to}, vertex.point)) {
+            if (distanceToSegment(vertex.point, {from, to}) < nearestLeftDistance) {
+                nearestLeftDistance = distanceToSegment(vertex.point, {from, to});
+                nearestLeftEdge = {from, to, value: graph.edgeValue(from, to)};
             }
         } else {
-            if (distanceToEdge(vertex.point, {from, to}) < nearestRightDistance) {
-                nearestRightDistance = distanceToEdge(vertex.point, {from, to});
-                nearestRightEdge = {from, to};
+            if (distanceToSegment(vertex.point, {from, to}) < nearestRightDistance) {
+                nearestRightDistance = distanceToSegment(vertex.point, {from, to});
+                nearestRightEdge = {from, to, value: graph.edgeValue(from, to)};
             }
         }
     }
@@ -188,10 +182,10 @@ const balanceGraph = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
 }
 
 const balanceDownUp = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
-    for (let i = 1; i < sortedVertices.length - 2; i++) {
-        if (graph.inDegree(sortedVertices[i].key) > graph.outDegree(sortedVertices[i].key)) {
-            const leftPoint = leftMostPoint(toPoints(graph, sortedVertices[i]));
-            const newEdgeValue = 1 + graph.inDegree(sortedVertices[i].key) - graph.outDegree(sortedVertices[i].key);
+    for (let i = 1; i < sortedVertices.length - 1; i++) {
+            if (inWeight(graph, sortedVertices[i]) > outWeight(graph, sortedVertices[i])) {
+            const leftPoint = leftMostPoint(outPoints(graph, sortedVertices[i]));
+            const newEdgeValue = 1 + inWeight(graph, sortedVertices[i]) - outWeight(graph, sortedVertices[i]);
             graph.setEdge(sortedVertices[i].key, pointKey(leftPoint), newEdgeValue);
         }
     }
@@ -201,9 +195,9 @@ const balanceDownUp = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
 
 const balanceUpDown = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     for (let i = sortedVertices.length - 2; i > 0; i--) {
-        if (graph.inDegree(sortedVertices[i].key) < graph.outDegree(sortedVertices[i].key)) {
-            const leftPoint = leftMostPoint(fromPoints(graph, sortedVertices[i]));
-            const newEdgeValue = 1 + graph.outDegree(sortedVertices[i].key) - graph.inDegree(sortedVertices[i].key);
+        if (inWeight(graph, sortedVertices[i]) < outWeight(graph, sortedVertices[i])) {
+            const leftPoint = leftMostPoint(inPoints(graph, sortedVertices[i]));
+            const newEdgeValue = 1 + outWeight(graph, sortedVertices[i]) - inWeight(graph, sortedVertices[i]);
             graph.setEdge(pointKey(leftPoint), sortedVertices[i].key, newEdgeValue);
         }
     }
@@ -211,7 +205,29 @@ const balanceUpDown = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     return graph;
 }
 
-const toPoints = (graph: IGraph, v: Vertex): Point[] => {
+const inWeight = (graph: IGraph, to: Vertex): number => {
+    let inW = 0;
+
+    // @ts-ignore
+    for (let [,, eValue] of graph.verticesTo(to.key)) {
+        inW += eValue;
+    }
+
+    return inW;
+}
+
+const outWeight = (graph: IGraph, from: Vertex): number => {
+    let outW = 0;
+
+    // @ts-ignore
+    for (let [,, eValue] of graph.verticesFrom(from.key)) {
+        outW += eValue;
+    }
+
+    return outW;
+}
+
+const outPoints = (graph: IGraph, v: Vertex): Point[] => {
     let points: Point[] = [];
 
     // @ts-ignore
@@ -222,7 +238,7 @@ const toPoints = (graph: IGraph, v: Vertex): Point[] => {
     return points;
 }
 
-const fromPoints = (graph: IGraph, v: Vertex): Point[] => {
+const inPoints = (graph: IGraph, v: Vertex): Point[] => {
     let points: Point[] = [];
 
     // @ts-ignore
@@ -231,4 +247,58 @@ const fromPoints = (graph: IGraph, v: Vertex): Point[] => {
     }
 
     return points;
+}
+
+const locateChains = (graph: IGraph, sortedVertices: Vertex[]): Chain[] => {
+    let chains: Chain[] = [];
+    
+    while (outPoints(graph, sortedVertices[0]).length !== 0) {
+        let prevV: Vertex | null = null;
+        let currV: Vertex = sortedVertices[0];
+        const chain: Chain = [];
+
+        while (currV.key !== sortedVertices[sortedVertices.length - 1].key) {
+            prevV = currV;
+            let currP = leftMostPoint(outPoints(graph, currV));
+            currV = {point: currP, key: pointKey(currP)};
+
+            chain.push({from: prevV.point, to: currV.point, value: 1})
+
+            graph = decreaseWeight(graph, prevV, currV);
+        }
+
+        if (chains.length > 0 && chainsEqual(chain, chains[chains.length - 1])) {
+            continue;
+        }
+        
+        chains.push(chain);
+    }
+
+    // TODO: remove duplicate chains
+    return chains;
+}
+
+const decreaseWeight = (graph: IGraph, from: Vertex, to: Vertex): IGraph => {
+    let val = graph.edgeValue(from.key, to.key);
+    if (val > 1) {
+        graph.setEdge(from.key, to.key, val - 1);
+    } else {
+        graph.removeEdge(from.key, to.key);
+    }
+
+    return graph;
+}
+
+const chainsEqual = (c1: Chain, c2: Chain): boolean => {
+    if (c1.length !== c2.length) {
+        return false;
+    } else {
+        for (let i = 0; i < c1.length; i++) {
+            if (edgeKey(c1[i]) !== edgeKey(c2[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
