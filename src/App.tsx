@@ -27,7 +27,7 @@ function App() {
 
   const [chains, setChains] = useState([] as Chain[]);
   const [resultChains, setResultChains] = useState([] as Chain[]);
-  const [displayedChains, setDisplayedChains] = useState(null as null | 'chains' | 'resultChains')
+  const [displayedChains, setDisplayedChains] = useState(null as null | 'chains' | 'resultChains' | 'hidden');
 
   const stageWidth = window.innerWidth * config.canvasWidthMultiplier;
   const stageHeigth = window.innerHeight * config.canvasHeightMultiplier;
@@ -152,15 +152,36 @@ function App() {
   }
 
   const handleToggleChainsClick = () => {
-    if (!displayedChains) {
-      return
+    if (displayedChains === null) {
+      return;
     }
 
-    if (displayedChains === 'chains') {
-      setDisplayedChains('resultChains');
-    } else {
-      setDisplayedChains('chains');
+    switch(displayedChains) {
+      case 'hidden':
+        setDisplayedChains('resultChains');
+        break;
+
+      case 'chains':
+        setDisplayedChains('hidden')
+        break;
+
+      case 'resultChains':
+        setDisplayedChains('chains');
+        break;
     }
+  }
+
+  const getToggleChainsText = () => {
+    switch(displayedChains) {
+      case 'hidden':
+        return 'Show enclosing chains';
+      
+      case 'chains':
+        return 'Hide all chains';
+
+      case 'resultChains':
+        return 'Show all chains'
+    } 
   }
 
   const handleLoadExampleClick = (num: number) => {
@@ -190,12 +211,12 @@ function App() {
             />
 
             {
-              displayedChains && displayedChains === 'chains'
+              displayedChains && displayedChains !== 'hidden' && displayedChains === 'chains'
               ? <Chains
                   chains={chains}
                   selectedEdge={selectedEdge}
                 />
-              : displayedChains && displayedChains === 'resultChains'
+              : displayedChains && displayedChains !== 'hidden' && displayedChains === 'resultChains'
                 ? <Chains
                     chains={resultChains}
                     selectedEdge={selectedEdge}
@@ -298,7 +319,7 @@ function App() {
                   className="inline-block bg-zinc-400 p-3 rounded-md hover:bg-zinc-500"
                   onClick={handleToggleChainsClick}
                 >
-                  Show {displayedChains === 'chains' ? "enclozing chains" : "all chains"}
+                  {getToggleChainsText()}
                 </button>
             }
 
@@ -312,21 +333,6 @@ function App() {
             >
               Clear all
             </button>
-
-            {
-              chains.length === 0
-              ? <button
-                  className="inline-block bg-yellow-800 p-3 rounded-md mr-4 cursor-not-allowed"
-                >
-                  Clear all chains
-                </button>
-              : <button
-                  className="inline-block bg-yellow-400 p-3 rounded-md mr-4 hover:bg-yellow-500"
-                  onClick={handleClearChainsClick}
-                >
-                  Clear all chains
-                </button>
-            }
 
             {
               selectedPoint || selectedEdge
