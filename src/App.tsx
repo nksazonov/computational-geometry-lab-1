@@ -234,14 +234,14 @@ function App() {
               className="inline-block bg-blue-400 p-3 rounded-md mr-4 hover:bg-blue-500"
               onClick={() => handleLoadExampleClick(1)}
             >
-              /\ Load example 1 /\
+              /\ Example 1 /\
             </button>
 
             <button
               className="inline-block bg-blue-400 p-3 rounded-md hover:bg-blue-500"
               onClick={() => handleLoadExampleClick(2)}
             >
-              /\ Load example 2 /\
+              /\ Example 2 /\
             </button>
 
             <div
@@ -253,13 +253,13 @@ function App() {
               ? <button
                   className="inline-block bg-green-900 p-3 rounded-md mr-4 cursor-not-allowed"
                 >
-                  \/ Save graph \/
+                  \/ Save \/
                 </button>
               : <button
                   className="inline-block bg-green-700 p-3 rounded-md mr-4 hover:bg-green-800"
                   onClick={handleSaveClick}
                 >
-                  \/ Save graph \/
+                  \/ Save \/
                 </button>
             }
 
@@ -269,13 +269,13 @@ function App() {
               ? <button
                   className="inline-block bg-green-900 p-3 rounded-md cursor-not-allowed"
                 >
-                  /\ Load saved graph /\
+                  /\ Load /\
                 </button>
               : <button
                   className="inline-block bg-green-700 p-3 rounded-md hover:bg-green-800"
                   onClick={handleLoadClick}
                 >
-                  /\ Load saved graph /\
+                  /\ Load /\
                 </button>
             }
 
