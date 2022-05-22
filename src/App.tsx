@@ -145,12 +145,6 @@ function App() {
     setEdges(savedEdges);
   }
 
-  const handleClearChainsClick = () => {
-    setChains([]);
-    setResultChains([]);
-    setDisplayedChains(null);
-  }
-
   const handleToggleChainsClick = () => {
     if (displayedChains === null) {
       return;
