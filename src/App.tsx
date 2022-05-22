@@ -9,7 +9,7 @@ import {
   nearestSegment as getNearestEdge,
   segmentsContain,
 } from './algorithms/point-locations';
-import { locatePoint, pointKey } from './algorithms/monotone_subdivisions';
+import { locatePoint, pointKey } from './algorithms/monotone-subdivisions';
 import { resizeData, transformChains, transformEdges, transformPoint, transformPoints } from './algorithms/transform';
 import Chains from './components/Chains';
 import Edges from './components/Edges';
@@ -26,8 +26,8 @@ function App() {
   const [savedEdges, saveEdges] = useState([] as Edge[]);
 
   const [chains, setChains] = useState([] as Chain[]);
-  const [resultChains, setResultChains] = useState([] as Chain[]);
-  const [displayedChains, setDisplayedChains] = useState(null as null | 'chains' | 'resultChains' | 'hidden');
+  const [enclosingChains, setEnclosingChains] = useState([] as Chain[]);
+  const [displayedChains, setDisplayedChains] = useState(null as null | 'chains' | 'enclosingChains' | 'hidden');
 
   const stageWidth = window.innerWidth * config.canvasWidthMultiplier;
   const stageHeigth = window.innerHeight * config.canvasHeightMultiplier;
@@ -98,7 +98,7 @@ function App() {
     setPoints([]);
     setEdges([]);
     setChains([]);
-    setResultChains([]);
+    setEnclosingChains([]);
     setDisplayedChains(null);
     setSelectedPoint(null);
     setSelectedEdge(null);
@@ -128,9 +128,9 @@ function App() {
 
     setEdges(transformEdges(result.edges));
     setChains(transformChains(result.chains));
-    setResultChains(transformChains(result.betweenChains));
+    setEnclosingChains(transformChains(result.enclosingChains));
 
-    setDisplayedChains('resultChains');
+    setDisplayedChains('enclosingChains');
   }
 
   const handleSaveClick = () => {
@@ -152,14 +152,14 @@ function App() {
 
     switch(displayedChains) {
       case 'hidden':
-        setDisplayedChains('resultChains');
+        setDisplayedChains('enclosingChains');
         break;
 
       case 'chains':
         setDisplayedChains('hidden')
         break;
 
-      case 'resultChains':
+      case 'enclosingChains':
         setDisplayedChains('chains');
         break;
     }
@@ -173,7 +173,7 @@ function App() {
       case 'chains':
         return 'Hide all chains';
 
-      case 'resultChains':
+      case 'enclosingChains':
         return 'Show all chains'
     } 
   }
@@ -210,9 +210,9 @@ function App() {
                   chains={chains}
                   selectedEdge={selectedEdge}
                 />
-              : displayedChains && displayedChains !== 'hidden' && displayedChains === 'resultChains'
+              : displayedChains && displayedChains !== 'hidden' && displayedChains === 'enclosingChains'
                 ? <Chains
-                    chains={resultChains}
+                    chains={enclosingChains}
                     selectedEdge={selectedEdge}
                   />
                 : null

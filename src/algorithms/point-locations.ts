@@ -1,5 +1,5 @@
 import {Point, Segment} from '../types/geometry';
-import { edgeKey, pointKey } from './monotone_subdivisions';
+import { edgeKey, pointKey } from './monotone-subdivisions';
 
 export function nearestPoint(point: Point, points: Point[], epsilon: number): Point | null {
     let nearestDistance = Infinity;

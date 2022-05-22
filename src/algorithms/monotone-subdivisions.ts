@@ -5,7 +5,7 @@ import { Point, Edge, Vertex, Chain, Segment } from "../types/geometry";
 import { distanceToSegment, distanceToPoint, isBetweenSegmentEndsX, isBetweenSegments, isLeftSegment, leftMostPoint, isRightSegment, isBetweenSegmentEndsY } from "./point-locations";
 
 interface ILocatePointResult {
-    betweenChains: Chain[],
+    enclosingChains: Chain[],
     chains: Chain[],
     edges: Edge[],
 }
@@ -20,7 +20,7 @@ export const locatePoint = (p: Point, points: Point[], edges: Edge[]): ILocatePo
         graph = regularize(graph, sortedVertices);
     }
     
-    balanceGraph(graph, sortedVertices);
+    balance(graph, sortedVertices);
 
     let changedEdges = [];
     
@@ -30,9 +30,10 @@ export const locatePoint = (p: Point, points: Point[], edges: Edge[]): ILocatePo
     }
     
     const chains = locateChains(graph, sortedVertices);
+    const enclosingChains = locateEnclosingChains(p, chains);
 
     return {
-        betweenChains: locatePointBetweenChains(p, chains),
+        enclosingChains,
         chains,
         edges: changedEdges
     };
@@ -88,8 +89,6 @@ const regularize = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     // \/ Top - Bottom \/
     for (let i = sortedVertices.length - 2; i >= 0; i--) {
         if (graph.outDegree(sortedVertices[i].key) === 0) {
-            console.log(nearestUpHalfPlaneVertex(graph, sortedVertices[i]));
-            
             graph.addEdge(sortedVertices[i].key, nearestUpHalfPlaneVertex(graph, sortedVertices[i]).key, 1);
         }
     }
@@ -97,7 +96,6 @@ const regularize = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     // /\ Bottom - Top /\
     for (let i = 1; i < sortedVertices.length; i++) {
         if (graph.inDegree(sortedVertices[i].key) === 0) {
-            console.log(nearestDownHalfPlaneVertex(graph, sortedVertices[i]));
             graph.addEdge(nearestDownHalfPlaneVertex(graph, sortedVertices[i]).key, sortedVertices[i].key, 1);
         }
     }
@@ -176,7 +174,7 @@ const nearestEdges = (graph: IGraph, vertex: Vertex): INearestEdges => {
     return {nearestLeftEdge, nearestRightEdge};
 }
 
-const balanceGraph = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
+const balance = (graph: IGraph, sortedVertices: Vertex[]): IGraph => {
     graph = balanceDownUp(graph, sortedVertices);
     graph = balanceUpDown(graph, sortedVertices);
     return graph;
@@ -303,7 +301,7 @@ const chainsEqual = (c1: Chain, c2: Chain): boolean => {
     }
 }
 
-const locatePointBetweenChains = (p: Point, chains: Chain[]): Chain[] => {
+const locateEnclosingChains = (p: Point, chains: Chain[]): Chain[] => {
     if (chains.length === 1) {
         return chains;
     }

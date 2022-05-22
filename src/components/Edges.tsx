@@ -1,6 +1,6 @@
 import React from 'react';
 import { Group, Line, Text } from 'react-konva';
-import { pointKey } from '../algorithms/monotone_subdivisions';
+import { pointKey } from '../algorithms/monotone-subdivisions';
 import config, { colorsConfig } from '../config';
 import { Edge, Segment } from '../types/geometry';
 

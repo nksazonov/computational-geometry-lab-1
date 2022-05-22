@@ -1,6 +1,6 @@
 import React from 'react';
 import { Circle, Group } from 'react-konva';
-import { pointKey } from '../algorithms/monotone_subdivisions';
+import { pointKey } from '../algorithms/monotone-subdivisions';
 import config, { colorsConfig } from '../config';
 import { Point } from '../types/geometry';
 
