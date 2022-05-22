@@ -137,10 +137,6 @@ export function leftMostPoint(points: Point[], relP: Point): Point {
     }
 
     return leftPoint;
-
-    // return points.sort((p1, p2) => {
-    //     return p1.x === p2.x ? p1.y - p2.y : p1.x - p2.x
-    // })[0];
 }
 
 export function hasAdjacentSegment(p: Point, segments: Segment[]): boolean {

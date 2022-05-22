@@ -308,6 +308,10 @@ const locatePointBetweenChains = (p: Point, chains: Chain[]): Chain[] => {
         return chains;
     }
 
+    if (!isBetweenSegmentEndsY({from: chains[0][0].from, to: chains[0][chains[0].length - 1].to}, p)) {
+        return [chains[0], chains[chains.length - 1]];
+    }
+
     let lIdx = 0;
     let rIdx = chains.length - 1;
 
@@ -328,11 +332,11 @@ const locatePointBetweenChains = (p: Point, chains: Chain[]): Chain[] => {
         }
 
         if (cmpLIdx === lIdx) {
-            return [chains[lIdx]];   
+            return [chains[0], chains[chains.length - 1]];   
         }
 
         if (cpmRIdx === rIdx) {
-            return [chains[rIdx]];
+            return [chains[0], chains[chains.length - 1]];
         }
     }
 
