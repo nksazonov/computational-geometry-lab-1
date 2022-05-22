@@ -22,8 +22,8 @@ function App() {
   const [selectedPoint, setSelectedPoint] = useState(null as Point | null);
   const [selectedEdge, setSelectedEdge] = useState(null as Segment | null);
   
-    const [savedPoints, savePoints] = useState([] as Point[]);
-    const [savedEdges, saveEdges] = useState([] as Edge[]);
+  const [savedPoints, savePoints] = useState([] as Point[]);
+  const [savedEdges, saveEdges] = useState([] as Edge[]);
 
   const [chains, setChains] = useState([] as Chain[]);
   const [resultChains, setResultChains] = useState([] as Chain[]);
@@ -76,7 +76,8 @@ function App() {
           setSelectedPoint(null);
         } else {
           // if selected is not the same as nearest AND edge is not already present - create edge to it
-          if (!segmentsContain(selectedPoint, edges)) {
+          if (!segmentsContain({from: selectedPoint, to: nearestPoint}, edges) ||
+            !segmentsContain({from: nearestPoint, to: selectedPoint}, edges)) {
             setEdges([...edges, {from: selectedPoint, to: nearestPoint, value: 1}]);
             setSelectedPoint(null);
           }

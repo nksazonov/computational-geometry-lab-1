@@ -1,5 +1,5 @@
 import {Point, Segment} from '../types/geometry';
-import { pointKey } from './monotone_subdivisions';
+import { edgeKey, pointKey } from './monotone_subdivisions';
 
 export function nearestPoint(point: Point, points: Point[], epsilon: number): Point | null {
     let nearestDistance = Infinity;
@@ -16,10 +16,9 @@ export function nearestPoint(point: Point, points: Point[], epsilon: number): Po
     return nearestPoint;
 }
 
-export function segmentsContain(p: Point, segments: Segment[]): boolean {
+export function segmentsContain(seg: Segment, segments: Segment[]): boolean {
     for (const s of segments) {
-        if (pointKey(s.from) === pointKey(p) ||
-        pointKey(s.to) === pointKey(p)) {
+        if (edgeKey(s) === edgeKey(seg)) {
             return true;
         }
     }

@@ -1,7 +1,7 @@
 import IGraph from "../types/graph";
 // @ts-ignore
 import Graph from "graph.js";
-import { Point, Edge, Vertex, Chain } from "../types/geometry";
+import { Point, Edge, Vertex, Chain, Segment } from "../types/geometry";
 import { distanceToSegment, distanceToPoint, isBetweenSegmentEndsX, isBetweenSegments, isLeftSegment, leftMostPoint, isRightSegment, isBetweenSegmentEndsY } from "./point-locations";
 
 interface ILocatePointResult {
@@ -44,7 +44,7 @@ const pointFromKey = (key: string): Point => {
     const [x, y] = key.split('_').map(s => Number(s));
     return {x, y};
 }
-export const edgeKey = (e: Edge) => `${pointKey(e.from)}-${pointKey(e.to)}`
+export const edgeKey = (s: Segment) => `${pointKey(s.from)}-${pointKey(s.to)}`
 
 const sortPointsByY = (points: Point[]): Point[] => points.sort((a, b) => a.y !== b.y ? a.y - b.y : a.x - b.x);
 
