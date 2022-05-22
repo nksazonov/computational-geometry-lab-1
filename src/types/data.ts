@@ -1,8 +1,12 @@
 import { Point, Edge } from "./geometry";
 
-interface IData {
+export interface IData {
     points: Point[];
     edges: Edge[];
+    screen: IStageDimensions;
 }
 
-export default IData;
+export interface IStageDimensions {
+    width: number;
+    height: number;
+}

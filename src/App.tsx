@@ -10,11 +10,11 @@ import {
   segmentsContain,
 } from './algorithms/point-locations';
 import { locatePoint, pointKey } from './algorithms/monotone_subdivisions';
-import { transformChains, transformEdges, transformPoint, transformPoints } from './algorithms/transform';
+import { resizeData, transformChains, transformEdges, transformPoint, transformPoints } from './algorithms/transform';
 import Chains from './components/Chains';
 import Edges from './components/Edges';
 import Points from './components/Points';
-import IData from './types/data';
+import {IData} from './types/data';
 
 function App() {
   const [points, setPoints] = useState([] as Point[]);
@@ -28,6 +28,9 @@ function App() {
   const [chains, setChains] = useState([] as Chain[]);
   const [resultChains, setResultChains] = useState([] as Chain[]);
   const [displayedChains, setDisplayedChains] = useState(null as null | 'chains' | 'resultChains')
+
+  const stageWidth = window.innerWidth * config.canvasWidthMultiplier;
+  const stageHeigth = window.innerHeight * config.canvasHeightMultiplier;
 
   const handleStageClick = (e: any) => {
     let {x, y} = e.currentTarget.getPointerPosition();
@@ -134,7 +137,7 @@ function App() {
     savePoints(points);
     saveEdges(edges);
 
-    console.log(JSON.stringify({points, edges}));
+    console.log(JSON.stringify({screen: {width: stageWidth, heigth: stageHeigth}, points, edges}));
   }
   
   const handleLoadClick = () => {
@@ -165,7 +168,12 @@ function App() {
     setSelectedEdge(null);
     setDisplayedChains(null);
 
-    const data: IData = require(`./data/example${num}.json`);
+    let data: IData = require(`./data/example${num}.json`);
+    console.log(data);
+    
+    data = resizeData(data, {width: stageWidth, height: stageHeigth});
+    console.log(data);
+
 
     setPoints(data.points);
     setEdges(data.edges);
@@ -174,8 +182,8 @@ function App() {
   return (
     <div className="w-screen h-screen bg-slate-700 p-4 border-box text-xs 2xl:text-base">
         <Stage
-          width={window.innerWidth * config.canvasWidthMultiplier}
-          height={window.innerHeight * config.canvasHeightMultiplier}
+          width={stageWidth}
+          height={stageHeigth}
           className="border-box bg-slate-800 rounded-3xl cursor-crosshair mb-4"
           onClick={handleStageClick}
         >

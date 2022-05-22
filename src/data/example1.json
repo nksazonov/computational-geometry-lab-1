@@ -1,4 +1,8 @@
 {
+    "screen": {
+        "width": 2458,
+        "height": 1198
+    },
     "points": [{
         "x": 1052,
         "y": 864
