@@ -22,16 +22,15 @@ export function transformEdge(e: Edge): Edge {
 }
 
 export function resizeData(data: IData, stage: IStageDimensions): IData {
-    const multiplier = stage.width / data.screen.width;
+    const widthRatio = stage.width / data.screen.width;
+    const heightRatio = stage.height / data.screen.height;
+
+    const multiplier = widthRatio < heightRatio ? widthRatio : heightRatio;
     return {screen: stage, points: resizePoints(data.points, multiplier), edges: resizeEdges(data.edges, multiplier)};
 }
 
 function resizePoints(points: Point[], multiplier: number): Point[] {
-    for (let i = 0; i < points.length; i++) {
-        points[i] = resizePoint(points[i], multiplier);
-    }
-
-    return points;
+    return points.map((p) => resizePoint(p, multiplier));
 }
 
 function resizePoint(p: Point, multiplier: number): Point {
@@ -39,11 +38,7 @@ function resizePoint(p: Point, multiplier: number): Point {
 }
 
 function resizeEdges(edges: Edge[], multiplier: number): Edge[] {
-    for (let i = 0; i < edges.length; i++) {
-        edges[i] = resizeEdge(edges[i], multiplier);
-    }
-
-    return edges;
+    return edges.map((e) => resizeEdge(e, multiplier));
 }
 
 function resizeEdge(e: Edge, multiplier: number): Edge {

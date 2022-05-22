@@ -168,15 +168,11 @@ function App() {
     setSelectedEdge(null);
     setDisplayedChains(null);
 
-    let data: IData = require(`./data/example${num}.json`);
-    console.log(data);
-    
-    data = resizeData(data, {width: stageWidth, height: stageHeigth});
-    console.log(data);
+    const data: IData = require(`./data/example${num}.json`);
+    const resizedData = resizeData(data, {width: stageWidth, height: stageHeigth});
 
-
-    setPoints(data.points);
-    setEdges(data.edges);
+    setPoints(resizedData.points);
+    setEdges(resizedData.edges);
   }
 
   return (
