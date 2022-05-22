@@ -107,7 +107,7 @@ function App() {
   const handleDeleteClick = () => {
     if (selectedPoint) {
       setPoints([...points.filter(p => p !== selectedPoint)]);
-      setEdges([...edges.filter(e => e.from !== selectedPoint && e.to !== selectedPoint)]);
+      setEdges([...edges.filter(e => pointKey(e.from) !== pointKey(selectedPoint) && pointKey(e.to) !== pointKey(selectedPoint))]);
       setSelectedPoint(null);
     } else {
       setEdges([...edges.filter(e => e !== selectedEdge)]);
